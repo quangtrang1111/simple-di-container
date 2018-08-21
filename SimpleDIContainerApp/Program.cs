@@ -8,25 +8,47 @@ namespace SimpleDIContainerApp
         static void Main(string[] args)
         {
             Console.WriteLine("Hello SimpleDIContainer!");
-            
-            DIContainer.AddTransient<IMyService, MyService>();
 
-            var instanceOne = DIContainer.ResolveModule<IMyService>();
-            var instanceTwo = DIContainer.ResolveModule<IMyService>();
+            DIContainer.AddSingleton<ILogger, Logger>();
+            var service = new Service(DIContainer.ResolveModule<ILogger>());
+            service.DoSomething();
 
+            DIContainer.AddTransient<IService, Service>();
+            var instanceOne = DIContainer.ResolveModule<IService>();
+            var instanceTwo = DIContainer.ResolveModule<IService>();
             Console.WriteLine(instanceOne == instanceTwo);
         }
     }
 
-    public interface IMyService
+    public interface IService
     {
     }
 
-    public class MyService : IMyService
+    public class Service : IService
     {
+        private readonly ILogger _logger;
+
+        public Service(ILogger logger)
+        {
+            _logger = logger;
+        }
+
+        public void DoSomething()
+        {
+            _logger.Log("I'm doing a stupid thing");
+        }
     }
 
-    public class MyOldService
+    public interface ILogger
     {
+        void Log(string message);
+    }
+
+    public class Logger : ILogger
+    {
+        public void Log(string message)
+        {
+            Console.WriteLine(message);
+        }
     }
 }

@@ -32,6 +32,11 @@ namespace SimpleDIContainer
 
         private static void SetModule(Type interfaceType, Type moduleType, Scope scope)
         {
+            if (ResgisteredModules.ContainsKey(interfaceType))
+            {
+                return;
+            }
+
             if (!interfaceType.IsAssignableFrom(moduleType))
             {
                 throw new Exception($"Module {interfaceType.FullName} wasn't implemented");
