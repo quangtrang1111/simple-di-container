@@ -13,7 +13,7 @@ namespace SimpleDIContainer
 
     public class DIContainer
     {
-        private static readonly Dictionary<Type, (Scope, object)> ResgisteredModules = new Dictionary<Type, (Scope, object)>();
+        private static readonly Dictionary<Type, (Scope, object)> _resgisteredModules = new Dictionary<Type, (Scope, object)>();
 
         public static void AddSingleton<TInterface, TModule>()
         {
@@ -32,7 +32,7 @@ namespace SimpleDIContainer
 
         private static void SetModule(Type interfaceType, Type moduleType, Scope scope)
         {
-            if (ResgisteredModules.ContainsKey(interfaceType))
+            if (_resgisteredModules.ContainsKey(interfaceType))
             {
                 return;
             }
@@ -44,18 +44,7 @@ namespace SimpleDIContainer
 
 
             var firstConstructor = moduleType.GetConstructors().FirstOrDefault();
-            switch (scope)
-            {
-                case Scope.Singletone:
-                    object module = getModuleInstance(firstConstructor);
-                    ResgisteredModules.Add(interfaceType, (scope, module));
-                    break;
-                case Scope.Transient:
-                    ResgisteredModules.Add(interfaceType, (scope, firstConstructor));
-                    break;
-                default:
-                    break;
-            }
+            _resgisteredModules.Add(interfaceType, (scope, firstConstructor));
         }
 
         private static object getModuleInstance(ConstructorInfo constructor)
@@ -85,12 +74,26 @@ namespace SimpleDIContainer
 
         private static object GetModule(Type interfaceType)
         {
-            if (ResgisteredModules.ContainsKey(interfaceType))
+            if (_resgisteredModules.ContainsKey(interfaceType))
             {
-                var tupleModule = ResgisteredModules[interfaceType];
-                return tupleModule.Item1 == Scope.Singletone
-                    ? tupleModule.Item2
-                    : getModuleInstance(tupleModule.Item2 as ConstructorInfo);
+                var tupleModule = _resgisteredModules[interfaceType];
+
+                switch (tupleModule.Item1)
+                {
+                    case Scope.Singletone:
+                        if (tupleModule.Item2 is ConstructorInfo)
+                        {
+                            _resgisteredModules[interfaceType] = (tupleModule.Item1, getModuleInstance(tupleModule.Item2 as ConstructorInfo));
+                            return _resgisteredModules[interfaceType].Item2;
+                        }
+
+                        return tupleModule.Item2;
+                    case Scope.Transient:
+                        return getModuleInstance(tupleModule.Item2 as ConstructorInfo);
+                }
+
+
+                
             }
 
             throw new Exception($"Module {interfaceType.FullName} isn't register");
