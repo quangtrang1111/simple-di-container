@@ -1,4 +1,5 @@
-﻿using SimpleDIContainer;
+﻿using Microsoft.Extensions.DependencyInjection;
+using SimpleDIContainer;
 using System;
 
 namespace SimpleDIContainerApp
@@ -9,16 +10,31 @@ namespace SimpleDIContainerApp
         {
             Console.WriteLine("Hello SimpleDIContainer!");
 
-            DIContainer.AddSingleton<IService, Service>();
-            DIContainer.AddTransient<ILogger, Logger>();
+            //DIContainer.AddSingleton<IService, Service>();
+            //DIContainer.AddSingleton<ILogger, Logger>();
 
-            var instanceOne = DIContainer.ResolveModule<IService>();
-            var instanceTwo = DIContainer.ResolveModule<IService>();
+            //var instanceOne = DIContainer.ResolveModule<IService>();
+            //var instanceTwo = DIContainer.ResolveModule<IService>();
 
-            Console.WriteLine(instanceOne == instanceTwo);
+            //Console.WriteLine(instanceOne == instanceTwo);
 
-            instanceOne.DoSomething();
-            instanceTwo.DoSomething();
+            //instanceOne.DoSomething();
+            //instanceTwo.DoSomething();
+
+            var services = new ServiceCollection();
+            services.AddScoped<ILogger, Logger>();
+            var provider = services.BuildServiceProvider();
+            var factory = provider.GetRequiredService<IServiceScopeFactory>();
+
+            var scope1 = factory.CreateScope();
+            var instance1 = scope1.ServiceProvider.GetService<ILogger>();
+            var instance2 = scope1.ServiceProvider.GetService<ILogger>();
+
+            var scope2 = factory.CreateScope();
+            var instance3 = scope2.ServiceProvider.GetService<ILogger>();
+
+            Console.WriteLine(instance1 == instance2);
+            Console.WriteLine(instance2 == instance3);
         }
     }
 
@@ -33,12 +49,12 @@ namespace SimpleDIContainerApp
 
         public Service(ILogger logger)
         {
-            //_logger = logger;
+            _logger = logger;
         }
 
         public void DoSomething()
         {
-            _logger = DIContainer.ResolveModule<ILogger>();
+            //_logger = DIContainer.ResolveModule<ILogger>();
             _logger.Log("This is my ID:");
         }
     }
