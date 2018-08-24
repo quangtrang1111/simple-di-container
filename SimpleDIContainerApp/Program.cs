@@ -9,33 +9,37 @@ namespace SimpleDIContainerApp
         {
             Console.WriteLine("Hello SimpleDIContainer!");
 
-            DIContainer.AddSingleton<ILogger, Logger>();
-            var service = new Service(DIContainer.ResolveModule<ILogger>());
-            service.DoSomething();
+            DIContainer.AddSingleton<IService, Service>();
+            DIContainer.AddTransient<ILogger, Logger>();
 
-            DIContainer.AddTransient<IService, Service>();
             var instanceOne = DIContainer.ResolveModule<IService>();
             var instanceTwo = DIContainer.ResolveModule<IService>();
+
             Console.WriteLine(instanceOne == instanceTwo);
+
+            instanceOne.DoSomething();
+            instanceTwo.DoSomething();
         }
     }
 
     public interface IService
     {
+        void DoSomething();
     }
 
     public class Service : IService
     {
-        private readonly ILogger _logger;
+        ILogger _logger;
 
         public Service(ILogger logger)
         {
-            _logger = logger;
+            //_logger = logger;
         }
 
         public void DoSomething()
         {
-            _logger.Log("I'm doing a stupid thing");
+            _logger = DIContainer.ResolveModule<ILogger>();
+            _logger.Log("This is my ID:");
         }
     }
 
@@ -46,9 +50,11 @@ namespace SimpleDIContainerApp
 
     public class Logger : ILogger
     {
+        public Guid Id = Guid.NewGuid();
+
         public void Log(string message)
         {
-            Console.WriteLine(message);
+            Console.WriteLine($"{message} {Id}");
         }
     }
 }
